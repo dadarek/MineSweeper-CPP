@@ -128,6 +128,50 @@ class Field
     return result;
   }
 
+  bool topLeftHasMine( int square ) const
+  {
+
+    bool result = false;
+    if( !isFirstRow( square ) && !isFirstColumn( square ) )
+    {
+      result = hasMine( square - columns_ - 1 );
+    }
+    return result;
+  }
+
+  bool topRightHasMine( int square ) const
+  {
+
+    bool result = false;
+    if( !isFirstRow( square ) && !isLastColumn( square ) )
+    {
+      result = hasMine( square - columns_ + 1 );
+    }
+    return result;
+  }
+
+  bool bottomLeftHasMine( int square ) const
+  {
+
+    bool result = false;
+    if( !isLastRow( square ) && !isFirstColumn( square ) )
+    {
+      result = hasMine( square + columns_ - 1 );
+    }
+    return result;
+  }
+
+  bool bottomRightHasMine( int square ) const
+  {
+
+    bool result = false;
+    if( !isLastRow( square ) && !isLastColumn( square ) )
+    {
+      result = hasMine( square + columns_ + 1 );
+    }
+    return result;
+  }
+
   int countNeighboringMines( int square ) const
   {
     int neighboringMines = 0;
@@ -135,17 +179,21 @@ class Field
     if( previousColumnHasMine( square ) ) ++neighboringMines;
     if( rowBelowHasMine      ( square ) ) ++neighboringMines;
     if( rowAboveHasMine      ( square ) ) ++neighboringMines;
+    if( topLeftHasMine       ( square ) ) ++neighboringMines;
+    if( topRightHasMine      ( square ) ) ++neighboringMines;
+    if( bottomLeftHasMine    ( square ) ) ++neighboringMines;
+    if( bottomRightHasMine   ( square ) ) ++neighboringMines;
     return neighboringMines;
   }
 };
 
 void findMines( const Field& field,  char* result)
 {
+  int currentSquare = 0;
   for(int currentColumn = 0; currentColumn < field.columns(); currentColumn++)
   {
     for(int currentRow = 0; currentRow < field.rows(); currentRow++)
     {
-      int currentSquare = ((currentRow+1) * (currentColumn+1)) - 1;
       if(field.hasMine( currentSquare ) )
       {
         result[currentSquare] = '*';
@@ -155,6 +203,7 @@ void findMines( const Field& field,  char* result)
         int neighboringMines = field.countNeighboringMines( currentSquare );
         result[ currentSquare ] = intToChar( neighboringMines );
       }
+      ++currentSquare;
     }
   }
 
@@ -216,6 +265,33 @@ void RUN_TESTS()
   TestScenario(".**", 3, 1, "1**");
   TestScenario("*.*", 3, 1, "*2*");
 
+  // CORNERS
+  TestScenario("....", 2, 2, "0000");
+  TestScenario("****", 2, 2, "****");
+
+  TestScenario("*...", 2, 2, "*111");
+  TestScenario(".*..", 2, 2, "1*11");
+  TestScenario("..*.", 2, 2, "11*1");
+  TestScenario("...*", 2, 2, "111*");
+
+  TestScenario("**..", 2, 2, "**22");
+  TestScenario(".**.", 2, 2, "2**2");
+  TestScenario("..**", 2, 2, "22**");
+
+  // 9 x 9
+  TestScenario("****.****", 3, 3, "****8****");
+
+  // EXAMPLES FROM BOOK
+  TestScenario("*........*......", 4, 4, "*10022101*101110");
+  TestScenario("**.........*....", 3, 5, "**100332001*100");
+
+  // JUST FOR GIGGLES
+  // *...*      *222*
+  // .*.*. ==== 2*3*2
+  // ..*..      23*32
+  // .*.*. ==== 2*3*2
+  // *...*      *222*
+  TestScenario("*...*.*.*...*...*.*.*...*", 5, 5, "*222*2*3*223*322*3*2*222*");
 
   if(__TOTAL_FAILURES__ > 0)
     printf("\033[0;31m");
