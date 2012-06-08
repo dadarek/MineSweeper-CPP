@@ -36,38 +36,6 @@ int __TOTAL_FAILURES__ = 0;
 
 using namespace std;
 
-struct Field
-{
-  char spaces[10000];
-  int rows;
-  int columns;
-  Field(const char* spaces, int rows, int columns)
-    : rows(rows),
-      columns(columns)
-  {
-    strcpy(this->spaces, spaces);
-  }
-};
-
-bool hasMine(const Field& field, int square )
-{
-  return field.spaces[square] == '*';
-}
-bool isFirstColumn(const Field& field, int square)
-{
-  return square % field.columns == 0;
-}
-bool isLastColumn(const Field& field, int square)
-{
-  return isFirstColumn(field, square+1);
-}
-bool isLastRow(const Field& field, int square)
-{
-  int totalSquares = field.rows * field.columns;
-  int sameColumnNextRow = square + field.columns;
-  return sameColumnNextRow >= totalSquares;
-}
-
 char intToChar(int i)
 {
   char intAsChar[2];
@@ -75,69 +43,122 @@ char intToChar(int i)
   return intAsChar[0];
 }
 
-bool previousColumnHasMine(const Field& field, int square)
+class Field
 {
-  bool result = false;
-  if( !isFirstColumn(field, square) )
+  char spaces_[10000];
+  int rows_;
+  int columns_;
+
+  public:
+  Field( const char* spaces, int rows, int columns )
+    : rows_    ( rows    )
+    , columns_ ( columns )
   {
-    result = hasMine(field, square - 1);
+    strcpy( this->spaces_, spaces );
   }
-  return result;
-}
 
-bool nextColumnHasMine(const Field& field, int square)
-{
-  bool result = false;
+  int rows() const { return rows_; }
+  int columns() const { return columns_; }
+  int totalSquares() const { return rows_ * columns_; }
 
-  if( !isLastColumn(field, square) )
+  bool hasMine( int square ) const
   {
-    result = hasMine(field, square + 1);
+    return this->spaces_[ square ] == '*';
   }
-  return result;
-}
 
-bool rowBelowHasMine(const Field& field, int square)
-{
-  bool result = false;
-
-  if( !isLastRow(field, square) )
+  bool isFirstColumn( int square ) const
   {
-    result = hasMine(field, square + field.columns);
+    return square % columns_ == 0;
   }
-  return result;
-}
+ 
+  bool isLastColumn( int square ) const
+  {
+    return isFirstColumn( square+1 );
+  }
 
-int countNeighboringMines(const Field& field, int square)
-{
-  int neighboringMines = 0;
-  if( nextColumnHasMine(field, square) ) ++neighboringMines;
-  if( previousColumnHasMine(field, square) ) ++neighboringMines;
-  if( rowBelowHasMine(field, square) ) ++neighboringMines;
-  return neighboringMines;
-}
+  bool isLastRow( int square ) const
+  {
+    int sameColumnNextRow = square + columns_;
+    return sameColumnNextRow >= totalSquares();
+  }
 
+  bool isFirstRow( int square ) const
+  {
+    int sameColumnPrevRow = square - columns_;
+    return sameColumnPrevRow < 0;
+  }
+
+  bool previousColumnHasMine( int square ) const
+  {
+    bool result = false;
+    if( !isFirstColumn( square ) )
+    {
+      result = hasMine( square - 1 );
+    }
+    return result;
+  }
+
+  bool nextColumnHasMine( int square ) const
+  {
+    bool result = false;
+    if( !isLastColumn( square ) )
+    {
+      result = hasMine( square + 1 );
+    }
+    return result;
+  }
+
+  bool rowBelowHasMine( int square ) const
+  {
+    bool result = false;
+    if( !isLastRow( square ) )
+    {
+      result = hasMine( square + columns_ );
+    }
+    return result;
+  }
+
+  bool rowAboveHasMine( int square ) const
+  {
+    bool result = false;
+    if( !isFirstRow( square ) )
+    {
+      result = hasMine( square - columns_ );
+    }
+    return result;
+  }
+
+  int countNeighboringMines( int square ) const
+  {
+    int neighboringMines = 0;
+    if( nextColumnHasMine    ( square ) ) ++neighboringMines;
+    if( previousColumnHasMine( square ) ) ++neighboringMines;
+    if( rowBelowHasMine      ( square ) ) ++neighboringMines;
+    if( rowAboveHasMine      ( square ) ) ++neighboringMines;
+    return neighboringMines;
+  }
+};
 
 void findMines( const Field& field,  char* result)
 {
-  for(int currentColumn = 0; currentColumn < field.columns; currentColumn++)
+  for(int currentColumn = 0; currentColumn < field.columns(); currentColumn++)
   {
-    for(int currentRow = 0; currentRow < field.rows; currentRow++)
+    for(int currentRow = 0; currentRow < field.rows(); currentRow++)
     {
       int currentSquare = ((currentRow+1) * (currentColumn+1)) - 1;
-
-      if(field.spaces[currentSquare] == '*')
+      if(field.hasMine( currentSquare ) )
       {
         result[currentSquare] = '*';
       }
       else
       {
-        int neighboringMines = countNeighboringMines(field, currentSquare);
-        result[currentSquare] = intToChar( neighboringMines );
+        int neighboringMines = field.countNeighboringMines( currentSquare );
+        result[ currentSquare ] = intToChar( neighboringMines );
       }
     }
   }
 
-  int lastSquare = field.columns * field.rows - 1;
+  int lastSquare = field.columns() * field.rows() - 1;
   result[ lastSquare+1 ] = '\0';
 }
 
@@ -250,9 +271,45 @@ void RUN_TESTS()
   }
 
   {
-    //Field field("*.", 2, 1);
-    //findMines(field, result);
-    //ASSERT_STREQ("*1", result);
+    Field field("*.", 2, 1);
+    findMines(field, result);
+    ASSERT_STREQ("*1", result);
+  }
+
+  {
+    Field field("**", 2, 1);
+    findMines(field, result);
+    ASSERT_STREQ("**", result);
+  }
+
+  {
+    Field field("...", 3, 1);
+    findMines(field, result);
+    ASSERT_STREQ("000", result);
+  }
+
+  {
+    Field field("*..", 3, 1);
+    findMines(field, result);
+    ASSERT_STREQ("*10", result);
+  }
+
+  {
+    Field field(".*.", 3, 1);
+    findMines(field, result);
+    ASSERT_STREQ("1*1", result);
+  }
+
+  {
+    Field field("..*", 3, 1);
+    findMines(field, result);
+    ASSERT_STREQ("01*", result);
+  }
+
+  {
+    Field field("**.", 3, 1);
+    findMines(field, result);
+    ASSERT_STREQ("**1", result);
   }
 
   if(__TOTAL_FAILURES__ > 0)
