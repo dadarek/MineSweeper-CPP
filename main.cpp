@@ -162,155 +162,60 @@ void findMines( const Field& field,  char* result)
   result[ lastSquare+1 ] = '\0';
 }
 
-void RUN_TESTS()
+void TestScenario(const char* mines, int rows, int columns, const char* expectedResult)
 {
   char result[10000];
 
-  {
-    Field field(".", 1, 1);
-    findMines(field, result);
-    ASSERT_STREQ("0", result);
-  }
+  Field field( mines, rows, columns );
+  findMines( field, result );
+  ASSERT_STREQ( expectedResult, result );
+}
 
-  {
-    Field field("*", 1, 1);
-    findMines(field, result);
-    ASSERT_STREQ("*", result);
-  }
+void RUN_TESTS()
+{
+  char result[10000];
+  // TODO: How do you get the ASSERT_EQ to print the line of the originating test?
+  // Would you need a macro test def?
 
-  {
-    Field field("..", 1, 2);
-    findMines(field, result);
-    ASSERT_STREQ("00", result);
-  }
+  TestScenario(".", 1, 1, "0");
+  TestScenario("*", 1, 1, "*");
 
-  {
-    Field field("**", 1, 2);
-    findMines(field, result);
-    ASSERT_STREQ("**", result);
-  }
+  // COLUMNS
+  TestScenario("..", 1, 2, "00");
+  TestScenario("**", 1, 2, "**");
 
-  {
-    Field field(".*", 1, 2);
-    findMines(field, result);
-    ASSERT_STREQ("1*", result);
-  }
+  TestScenario(".*", 1, 2, "1*");
+  TestScenario("*.", 1, 2, "*1");
 
-  {
-    Field field("*.", 1, 2);
-    findMines(field, result);
-    ASSERT_STREQ("*1", result);
-  }
+  TestScenario("...", 1, 3, "000");
+  TestScenario("***", 1, 3, "***");
 
-  {
-    Field field("...", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("000", result);
-  }
+  TestScenario("*..", 1, 3, "*10");
+  TestScenario("..*", 1, 3, "01*");
+  TestScenario(".*.", 1, 3, "1*1");
 
-  {
-    Field field("***", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("***", result);
-  }
-
-  {
-    Field field("*..", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("*10", result);
-  }
-
-  {
-    Field field("..*", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("01*", result);
-  }
-
-  {
-    Field field(".*.", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("1*1", result);
-  }
-
-  {
-    Field field("*.*", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("*2*", result);
-  }
-
-  {
-    Field field("**.", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("**1", result);
-  }
-
-  {
-    Field field(".**", 1, 3);
-    findMines(field, result);
-    ASSERT_STREQ("1**", result);
-  }
+  TestScenario("*.*", 1, 3, "*2*");
+  TestScenario("**.", 1, 3, "**1");
+  TestScenario(".**", 1, 3, "1**");
 
   // ROWS
+  TestScenario("..", 2, 1, "00");
+  TestScenario("**", 2, 1, "**");
 
-  {
-    Field field("..", 2, 1);
-    findMines(field, result);
-    ASSERT_STREQ("00", result);
-  }
+  TestScenario(".*", 2, 1, "1*");
+  TestScenario("*.", 2, 1, "*1");
 
-  {
-    Field field("**", 2, 1);
-    findMines(field, result);
-    ASSERT_STREQ("**", result);
-  }
+  TestScenario("...", 3, 1, "000");
+  TestScenario("***", 3, 1, "***");
 
-  {
-    Field field(".*", 2, 1);
-    findMines(field, result);
-    ASSERT_STREQ("1*", result);
-  }
+  TestScenario("*..", 3, 1, "*10");
+  TestScenario(".*.", 3, 1, "1*1");
+  TestScenario("..*", 3, 1, "01*");
 
-  {
-    Field field("*.", 2, 1);
-    findMines(field, result);
-    ASSERT_STREQ("*1", result);
-  }
+  TestScenario("**.", 3, 1, "**1");
+  TestScenario(".**", 3, 1, "1**");
+  TestScenario("*.*", 3, 1, "*2*");
 
-  {
-    Field field("**", 2, 1);
-    findMines(field, result);
-    ASSERT_STREQ("**", result);
-  }
-
-  {
-    Field field("...", 3, 1);
-    findMines(field, result);
-    ASSERT_STREQ("000", result);
-  }
-
-  {
-    Field field("*..", 3, 1);
-    findMines(field, result);
-    ASSERT_STREQ("*10", result);
-  }
-
-  {
-    Field field(".*.", 3, 1);
-    findMines(field, result);
-    ASSERT_STREQ("1*1", result);
-  }
-
-  {
-    Field field("..*", 3, 1);
-    findMines(field, result);
-    ASSERT_STREQ("01*", result);
-  }
-
-  {
-    Field field("**.", 3, 1);
-    findMines(field, result);
-    ASSERT_STREQ("**1", result);
-  }
 
   if(__TOTAL_FAILURES__ > 0)
     printf("\033[0;31m");
